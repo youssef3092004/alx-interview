@@ -10,13 +10,14 @@ def minOperations(n):
     Returns:
         int: The minimum number of operations required to reach exactly n 'H' characters.
     """
+    if n <= 1:
+        return 0
     operation = 0
     i = 2
-
     while n > 1:
         if n % i == 0:
             operation += i
-            n //= i  # Use integer division here
+            n //= i
         else:
             i += 1
     return operation
