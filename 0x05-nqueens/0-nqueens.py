@@ -1,59 +1,91 @@
 #!/usr/bin/python3
-"""placement of N non-attacking queens on an N×N chessboard."""
+'''N Queens Challenge'''
+
 import sys
 
 
-def n_from_argv():
-    """Get the value of N from command-line"""
+if __name__ == '__main__':
     if len(sys.argv) != 2:
-        return 0, "Usage: nqueens N"
+        print("Usage: nqueens N")
+        sys.exit(1)
+
     try:
-        N = int(sys.argv[1])
+        n = int(sys.argv[1])
     except ValueError:
-        return 0, "N must be a number"
-    if N < 4:
-        return N, "N must be at least 4"
-    return N, None
-
-
-def nqueens(N):
-    """Get every possible solution to place
-    N non-attacking queens on an NxN chessboard
-    """
-    cols = []
-    neg_diag = set()
-    pos_diag = set()
-    solutions = []
-
-    def place_queen(row=0):
-        """Place queens recursively on an NxN chessboard"""
-        if row == N:
-            # There are already N queens placed (a solution)
-            return solutions.append(cols.copy())
-        for col in range(N):
-            add = row + col
-            sub = row - col
-            # if not under attack by any placed queen
-            if not (col in cols or add in pos_diag or sub in neg_diag):
-                # place it in this [row, col]
-                cols.append(col)
-                pos_diag.add(add)
-                neg_diag.add(sub)
-                # place another one in next row
-                place_queen(row + 1)
-                # take the queen off-board to use it in the next valid column
-                cols.pop()
-                pos_diag.remove(add)
-                neg_diag.remove(sub)
-
-    place_queen()
-    return solutions
-
-
-if __name__ == "__main__":
-    N, err = n_from_argv()
-    if err:
-        print(err)
+        print('N must be a number')
         exit(1)
-    for sol in nqueens(N):
-        print([[x, y] for x, y in enumerate(sol)])
+
+    if n < 4:
+        print('N must be at least 4')
+        exit(1)
+
+    solutions = []
+    placed_queens = []  # coordinates format [row, column]
+    stop = False
+    r = 0
+    c = 0
+
+    # iterate thru rows
+    while r < n:
+        goback = False
+        # iterate thru columns
+        while c < n:
+            # check is current column is safe
+            safe = True
+            for cord in placed_queens:
+                col = cord[1]
+                if(col == c or col + (r-cord[0]) == c or
+                        col - (r-cord[0]) == c):
+                    safe = False
+                    break
+
+            if not safe:
+                if c == n - 1:
+                    goback = True
+                    break
+                c += 1
+                continue
+
+            # place queen
+            cords = [r, c]
+            placed_queens.append(cords)
+            # if last row, append solution and reset all to last unfinished row
+            # and last safe column in that row
+            if r == n - 1:
+                solutions.append(placed_queens[:])
+                for cord in placed_queens:
+                    if cord[1] < n - 1:
+                        r = cord[0]
+                        c = cord[1]
+                for i in range(n - r):
+                    placed_queens.pop()
+                if r == n - 1 and c == n - 1:
+                    placed_queens = []
+                    stop = True
+                r -= 1
+                c += 1
+            else:
+                c = 0
+            break
+        if stop:
+            break
+        # on fail: go back to previous row
+        # and continue from last safe column + 1
+        if goback:
+            r -= 1
+            while r >= 0:
+                c = placed_queens[r][1] + 1
+                del placed_queens[r]  # delete previous queen coordinates
+                if c < n:
+                    break
+                r -= 1
+            if r < 0:
+                break
+            continue
+        r += 1
+
+    for idx, val in enumerate(solutions):
+        if idx == len(solutions) - 1:
+            print(val, end='')
+        else:
+            print(val)
