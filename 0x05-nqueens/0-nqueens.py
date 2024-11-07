@@ -1,68 +1,59 @@
 #!/usr/bin/python3
-"""
-Solution to the nqueens problem
-"""
+"""placement of N non-attacking queens on an N×N chessboard."""
 import sys
 
 
-def backtrack(r, n, cols, pos, neg, board):
+def n_from_argv():
+    """Get the value of N from command-line"""
+    if len(sys.argv) != 2:
+        return 0, "Usage: nqueens N"
+    try:
+        N = int(sys.argv[1])
+    except ValueError:
+        return 0, "N must be a number"
+    if N < 4:
+        return N, "N must be at least 4"
+    return N, None
+
+
+def nqueens(N):
+    """Get every possible solution to place
+    N non-attacking queens on an NxN chessboard
     """
-    backtrack function to find solution
-    """
-    if r == n:
-        res = []
-        for l in range(len(board)):
-            for k in range(len(board[l])):
-                if board[l][k] == 1:
-                    res.append([l, k])
-        print(res)
-        return
-
-    for c in range(n):
-        if c in cols or (r + c) in pos or (r - c) in neg:
-            continue
-
-        cols.add(c)
-        pos.add(r + c)
-        neg.add(r - c)
-        board[r][c] = 1
-
-        backtrack(r+1, n, cols, pos, neg, board)
-
-        cols.remove(c)
-        pos.remove(r + c)
-        neg.remove(r - c)
-        board[r][c] = 0
-
-
-def nqueens(n):
-    """
-    Solution to nqueens problem
-    Args:
-        n (int): number of queens. Must be >= 4
-    Return:
-        List of lists representing coordinates of each
-        queen for all possible solutions
-    """
-    cols = set()
-    pos_diag = set()
+    cols = []
     neg_diag = set()
-    board = [[0] * n for i in range(n)]
+    pos_diag = set()
+    solutions = []
 
-    backtrack(0, n, cols, pos_diag, neg_diag, board)
+    def place_queen(row=0):
+        """Place queens recursively on an NxN chessboard"""
+        if row == N:
+            # There are already N queens placed (a solution)
+            return solutions.append(cols.copy())
+        for col in range(N):
+            add = row + col
+            sub = row - col
+            # if not under attack by any placed queen
+            if not (col in cols or add in pos_diag or sub in neg_diag):
+                # place it in this [row, col]
+                cols.append(col)
+                pos_diag.add(add)
+                neg_diag.add(sub)
+                # place another one in next row
+                place_queen(row + 1)
+                # take the queen off-board to use it in the next valid column
+                cols.pop()
+                pos_diag.remove(add)
+                neg_diag.remove(sub)
+
+    place_queen()
+    return solutions
 
 
 if __name__ == "__main__":
-    n = sys.argv
-    if len(n) != 2:
-        print("Usage: nqueens N")
-        sys.exit(1)
-    try:
-        nn = int(n[1])
-        if nn < 4:
-            print("N must be at least 4")
-            sys.exit(1)
-        nqueens(nn)
-    except ValueError:
-        print("N must be a number")
-        sys.exit(1)
+    N, err = n_from_argv()
+    if err:
+        print(err)
+        exit(1)
+    for sol in nqueens(N):
+        print([[x, y] for x, y in enumerate(sol)])
